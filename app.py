@@ -38,7 +38,7 @@ def index():
     events = body["events"]
     if request.method == 'POST' and len(events) == 0:
         return 'ok'
-    print(body)
+    print(">>>>>>",body,"<<<<<")
     if "replyToken" in events[0]:
         payload = dict()
         replyToken = events[0]["replyToken"]
