@@ -8,6 +8,7 @@ import json
 import configparser
 import os
 from urllib import parse
+import string
 app = Flask(__name__, static_url_path='/static')
 UPLOAD_FOLDER = 'static'
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -168,19 +169,24 @@ def sendTextMessageToMe():
 
 
 def getNameEmojiMessage():
-    lookUpStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    lookUpStr = string.ascii_uppercase + string.ascii_lowercase
     productId = "5ac21a8c040ab15980c9b43f"
-    name = ""
+    name = "Miles"
     message = dict()
+    message['type'] = "text"
+    message['text'] = "$" * len(name)
+    emojis = list()
+    for i, c in enumerate(name):
+        emojis.append({
+            "index": i,
+            "productId": productId,
+            "emojiId": f"{lookUpStr.index(c) + 1}".zfill(3)
+        })
+    message['emojis'] = emojis
     return message
 
 
 def getCarouselMessage(data):
-    message = dict()
-    return message
-
-
-def getLocationConfirmMessage(title, latitude, longitude):
     message = dict()
     return message
 
@@ -191,17 +197,31 @@ def getCallCarMessage(data):
 
 
 def getPlayStickerMessage():
-    message = dict()
+    message = {
+        "type": "sticker",
+        "packageId": "446",
+        "stickerId": "1988"
+    }
     return message
 
 
 def getTaipei101LocationMessage():
-    message = dict()
+    message = {
+      "type": "location",
+      "title": "台北101",
+      "address": "110台北市信義區市府路45號",
+      "latitude": 25.034127,
+      "longitude": 121.5618272
+    }
     return message
 
 
 def getMRTVideoMessage():
-    message = dict()
+    message = {
+      "type": "video",
+      "originalContentUrl": F"{end_point}/static/taipei_101_video.mp4",
+      "previewImageUrl": F"{end_point}/static/taipei_101.jpeg"
+    }
     return message
 
 
@@ -222,7 +242,11 @@ def getTaipei101ImageMessage(originalContentUrl=F"{end_point}/static/taipei_101.
 
 
 def getImageMessage(originalContentUrl):
-    message = dict()
+    message = {
+      "type": "image",
+      "originalContentUrl": originalContentUrl,
+      "previewImageUrl": originalContentUrl
+    }
     return message
 
 
@@ -233,19 +257,23 @@ def replyMessage(payload):
 
 
 def pushMessage(payload):
-    response = {}
+    response = requests.post("https://api.line.me/v2/bot/message/push",headers=HEADER,json=payload)
+    print(response.text)
     return 'OK'
 
 
 def getTotalSentMessageCount():
-    response = {}
-    return 0
+    response = requests.get("https://api.line.me/v2/bot/message/quota/consumption",headers=HEADER)
+    totalUsage = response.json()['totalUsage']
+    return totalUsage
 
 
 def getTodayCovid19Message():
-    date = ""
-    total_count = 0
-    count = 0
+    response = requests.get("https://covid-19.nchc.org.tw/api/covid19?CK=covid-19@nchc.org.tw&querydata=3001&limited=TWN")
+    data = response.json()[0]
+    date = data['a04']
+    total_count = data['a05']
+    count = data['a06']
     return F"日期：{date}, 人數：{count}, 確診總人數：{total_count}"
 
 
